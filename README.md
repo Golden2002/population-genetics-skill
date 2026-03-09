@@ -1,17 +1,18 @@
 # Population Genetics Assistant (群体遗传学助手)
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Claude-Skill-blue" alt="Claude Skill">
+<p align="left">
+  <img src="https://img.shields.io/badge/version-v2.1-blue" alt="Version">
+  <img src="https://img.shields.io/badge/Agent-Skill-blue" alt="Agent Skill">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License">
   <img src="https://img.shields.io/badge/Population-Genetics-green" alt="Population Genetics">
-  <img src="https://img.shields.io/badge/Ancient--DNA-purple" alt="Ancient DNA">
   <img src="https://img.shields.io/badge/Chinese--friendly-orange" alt="Chinese Friendly">
 </p>
 
 ## 简介
 
-Population Genetics Assistant 是一款专为**群体遗传学研究者**设计的 Claude AI 助手技能 (Skill)，帮助你完成从数据分析到论文写作的全流程工作。
+Population Genetics Assistant 是一款专为**群体遗传学研究者**设计的 AI 智能体助手技能 (Skill)，帮助你完成从数据分析到论文写作的全流程工作。
 
-当你在与 Claude 对话中涉及以下内容时，此技能将**自动激活**：
+当你在与 ClaudeCode/OpenCode/OpenClaw 等智能体对话中涉及以下内容时，此技能将**自动激活**：
 - 群体结构分析 (PCA, Admixture, fineSTRUCTURE)
 - 选择信号检测 (Fst, Tajima's D, iHS, XP-EHH)
 - 古代DNA (aDNA) 分析与联合分析

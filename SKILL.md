@@ -21,10 +21,13 @@ description: |
 
 ---
 
-## 用户工作流记忆（关键） - 可个性化扩展
+## 用户工作流记忆（关键） - 个性化配置（基于用户脚本自动生成）
 
 **本模块为可扩展配置区**：编写脚本时，将根据以下配置生成个性化脚本。如需更新配置，可提供你的参考脚本或直接编辑本模块内容。
+
 ！优先选择在example文件中创建专门的配置记忆。
+
+---
 
 ### 1. 基础配置
 
@@ -44,7 +47,7 @@ STRICT_MODE="set -euo pipefail"
 
 # -------- 计算资源默认 --------
 DEFAULT_THREADS=8
-DEFAULT_MEM="32G"
+DEFAULT_MEM="32G"           # 常用: 32G (PLINK/Admixture), 64G (IBD分析)
 DEFAULT_PARTITION="batch"
 
 # -------- SLURM 模板 --------
@@ -57,89 +60,59 @@ DEFAULT_PARTITION="batch"
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --array=0-N
-# [在此添加更多基础配置...]
 ```
 
-### 2. 目录结构
+### 2. 目录结构（用户实际使用）
 
 ```
 # =====================================
 # 2. 目录结构
 # =====================================
 
-# -------- 主项目根目录 --------
-PROJECT_ROOT="/PATH/TO/YOUR/PROJECT"
+# -------- 主项目根目录（用户实际路径）--------
+PROJECT_ROOT="/share/home/litianxing/100My_Jino"   # 集群共享存储
 
 # -------- 标准子目录 --------
 DATA_DIR="${PROJECT_ROOT}/data"
 PROCESSED_DIR="${PROJECT_ROOT}/processed"
 PLINK_DIR="${PROJECT_ROOT}/plink_files"
 ADMIX_DIR="${PROJECT_ROOT}/admix_results"
-CP_DIR="${PROJECT_ROOT}/chromopainter"
-DIVERSITY_DIR="${PROJECT_ROOT}/diversity"
-SELECTION_DIR="${PROJECT_ROOT}/selection"
+ADMIX_DIR2="${PROJECT_ROOT}/admix_results2"
+RESULTS_DIR="${PROJECT_ROOT}/results"
 LOG_DIR="${PROJECT_ROOT}/logs"
-SAMPLE_DIR="${PROJECT_ROOT}/sample_lists"
-SCRIPT_DIR="${PROJECT_ROOT}/scripts"
-REF_DIR="${PROJECT_ROOT}/reference"
+POPLIST_DIR="${PROJECT_ROOT}/poplist"
+MAP_DIR="${PROJECT_ROOT}/map"
 
 # -------- 数据面板目录 --------
-DATAPANEL_ROOT="/PATH/TO/DATAPANEL"
+DATAPANEL_ROOT="/share/home/litianxing/100My_Jino/101DataPanel"
 
 # -------- 共享存储 --------
-SHARE_ROOT="/PATH/TO/SHARE"
-# [在此添加更多目录结构...]
+SHARE_ROOT="/share/home/litianxing"
 ```
 
-### 3. 软件路径 / 加载方式
+### 3. 软件路径 / 加载方式（用户实际配置）
 
 ```
 # =====================================
 # 3. 软件路径 / 加载方式
 # =====================================
 
-# -------- 系统安装软件 (添加到PATH) --------
-# 格式: export PATH="/SOFTWARE/PATH:$PATH"
-# 示例:
-# export PATH="/opt/plink1.9:$PATH"
-# export PATH="/opt/admixture:$PATH"
+# -------- Java环境 --------
+JAVA="/share/apps/cluster/jdk-17.0.5/bin/java"
 
-# -------- Conda环境 --------
-# 格式: conda activate ENV_NAME
-# 示例:
-# conda activate population_genomics
+# -------- IBD分析专用软件 --------
+REFINED_IBD="${PROJECT_ROOT}/107.IBD/refined-ibd.17Jan20.102.jar"
+MERGE_IBD_SEG="${PROJECT_ROOT}/107.IBD/merge-ibd-segments.17Jan20.102.jar"
+HAP_IBD_JAR="${PROJECT_ROOT}/107.IBD/hap-ibd.jar"
 
-# -------- 模块加载 (Lmod) --------
-# 格式: module load SOFTWARE/VERSION
-# 示例:
-# module load plink/1.9
-# module load vcftools/0.1.16
+# -------- EIGENSOFT/AdmixTools --------
+CONVERTF="/share/apps/gene/AdmixTools-7.0.2/bin/convertf"
 
-# -------- 常用软件路径 (二选一: 路径 或 模块) --------
-# | 软件 | 路径/模块 | 用途 |
-# |------|-----------|------|
-# | PLINK | 模块: plink/1.9 或 路径: /opt/plink1.9/plink | 基因型数据处理 |
-# | ADMIXTURE | 模块: admixture/1.3.0 | 群体结构分析 |
-# | VCFtools | 模块: vcftools/0.1.16 | VCF文件处理 |
-# | BCFtools | 模块: bcftools/1.14 | 变异处理 |
-# | Selscan | 编译安装 | 选择信号(iHS/XP-EHH) |
-# | ShapeIt4 | 编译安装 | 单倍型分型 |
-# | Eagle | 路径: /opt/eagle | 单倍型插补 |
-# | Beagle | 路径: /opt/beagle | 单倍型插补 |
-# | IQ-TREE | 模块: iqtree/2.0 | 系统发育树 |
-# | R | 模块: R/4.2.0 | 统计计算 |
-# | Python | 模块: python/3.10 | 数据处理 |
-
-# -------- 特殊软件路径 --------
-# ChromoPainter / fineSTRUCTURE
-# CHROMOPAINTER_BIN="/PATH/TO/chromopainter"
-# FINESTRUCTURE_BIN="/PATH/TO/finestructure"
-# CHROMOCOMBINE_BIN="/PATH/TO/chromocombine"
-
-# [在此添加更多软件配置...]
+# -------- 常用软件（直接调用）--------
+# PLINK, ADMIXTURE, VCFtools, BCFtools, PopLDdecay
 ```
 
-### 4. 群体遗传常用分析参数
+### 4. 群体遗传常用分析参数（用户实际使用）
 
 ```
 # =====================================
@@ -147,54 +120,22 @@ SHARE_ROOT="/PATH/TO/SHARE"
 # =====================================
 
 # -------- 质量控制 (QC) --------
-MAF_THRESHOLD=0.05        # 最小等位基因频率 (--maf)
-MIND_THRESHOLD=0.1        # 个体缺失率阈值 (--mind)
-GENO_THRESHOLD=0.999999   # 位点缺失率阈值 (--geno)
-HWE_THRESHOLD=0.001       # Hardy-Weinberg平衡检验P值
-
-# -------- LD Pruning --------
-LD_WINDOW_SIZE=50         # 窗口大小 (SNP数量)
-LD_WINDOW_SHIFT=10        # 窗口滑动步长
-LD_R2_THRESHOLD=0.6       # R²阈值
+MAF_THRESHOLD=0.05        # 最小等位基因频率
+MIND_THRESHOLD=0.1        # 个体缺失率阈值
+GENO_THRESHOLD=0.999999   # 位点缺失率阈值
 
 # -------- Admixture --------
 ADMIX_MIN_K=2             # 最小K值
-ADMIX_MAX_K=20            # 最大K值 (通常10-20)
-ADMIX_THREADS=8           # 线程数 (-j)
-ADMIX_CV=TRUE             # 是否输出CV误差
+ADMIX_MAX_K=8             # 最大K值 (用户常用: 2-8)
+ADMIX_THREADS=8           # 线程数
 
-# -------- PCA分析 --------
-PCA_MAX_PCS=20            # 最大主成分数
+# -------- ROH分析 --------
+ROH_KB=100                # ROH最小长度(kb)
+ROH_SNP=10                # ROH内最小SNP数
 
-# -------- 选择信号分析 --------
-# Tajima's D
-TAJIMA_WINDOW=100000      # 窗口大小 (bp)
-TAJIMA_STEP=50000         # 滑动步长
-
-# Fst
-FST_WINDOW=100000         # 窗口大小
-FST_STEP=10000            # 滑动步长
-
-# iHS / XP-EHH
-IHS_CUTOFF=0.05           # 显著性阈值
-XPEHH_CUTOFF=0.05
-
-# -------- 单倍型分析 (ChromoPainter) --------
-CP_CHR_LIST=$(seq 1 22)   # 染色体列表
-CP_EM_ITERS=10            # EM估计迭代次数
-CP_SUBSET_S=10            # haplotype子采样大小
-CP_USE_RECOMB=TRUE        # 是否使用recombination map
-
-# fineSTRUCTURE
-FS_BURNIN=200000          # MCMC burn-in
-FS_SAMPLE=200000          # MCMC采样数
-FS_THIN=1000              #  thinning间隔
-
-# -------- MSMC / SMC++ --------
-MSMC_TIME_segments=8       # 时间区段数
-SMC_CUTOFF=0.05           #  cutoff
-
-# [在此添加更多分析参数...]
+# -------- IBD分析 --------
+IBD_LENGTH_CUTOFF=1.0     # IBD片段最小长度(cM)
+IBD_LOD_SCORE=3.0         # LOD评分阈值
 ```
 
 ### 5. 数据 / 样本列表 / 辅助文件路径
@@ -204,61 +145,18 @@ SMC_CUTOFF=0.05           #  cutoff
 # 5. 数据 / 样本列表 / 辅助文件路径
 # =====================================
 
-# -------- 参考基因组 --------
-# REF_GENOME="/PATH/TO/reference/genome.fa"
-# REF_DICT="/PATH/TO/reference/genome.dict"
-# REFFAI="/PATH/TO/reference/genome.fa.fai"
-
 # -------- VCF文件 --------
-# 原始VCF
-# RAW_VCF="/PATH/TO/raw.vcf.gz"
-
-# 过滤后VCF
-# FILTERED_VCF="/PATH/TO/filtered.vcf.gz"
-
-# 分染色体VCF
-# CHR_VCF_PATTERN="/PATH/TO/chr{1..22}.vcf.gz"
+PHASED_VCF="${PROJECT_ROOT}/xxx/NGS.phased.vcf.gz"
 
 # -------- PLINK文件 --------
-# 原始PLINK
-# RAW_BED="/PATH/TO/raw.bed"
-
-# 质控后PLINK
-# QC_BED="/PATH/TO/qc.bed"
-
-# Pruning后PLINK
-# PRUNED_BED="/PATH/TO/pruned.bed"
+MAF_FILTERED_BED="${PROJECT_ROOT}/xxx/NGS.maf_filtered"
+LD_FILTERED_BED="${PROJECT_ROOT}/xxx/NGS.maf_ld_filtered"
 
 # -------- 样本列表 --------
-# 全样本列表 (FID IID格式)
-# ALL_SAMPLES="/PATH/TO/all_samples.txt"
+POP_LIST_DIR="${PROJECT_ROOT}/poplist/population_lists"
 
-# 分群体样本列表
-# POP1_SAMPLES="/PATH/TO/pop1_samples.txt"
-# POP2_SAMPLES="/PATH/TO/pop2_samples.txt"
-# MALE_SAMPLES="/PATH/TO/male_samples.txt"
-
-# 排除样本列表
-# EXCLUDE_SAMPLES="/PATH/TO/exclude.txt"
-
-# -------- 辅助文件 --------
-# 遗传图谱 ( recombination map)
-# RECOMB_MAP="/PATH/TO/recombination_map/chr${chr}.recombfile"
-
-# 样本-haplotype映射文件 (ChromoPainter)
-# HAPLO_IDS="/PATH/TO/samples.ids"
-
-# 群体标签文件
-# POP_FILE="/PATH/TO/population_labels.txt"
-
-# 基因组区域文件 (可选过滤/提取)
-# BED_FILE="/PATH/TO/targets.bed"
-
-# -------- 表型文件 (GWAS) --------
-# PHENO_FILE="/PATH/TO/phenotype.txt"
-# COVAR_FILE="/PATH/TO/covariates.txt"
-
-# [在此添加更多数据路径...]
+# -------- 遗传图谱 --------
+MAP_FILE="${MAP_DIR}/plink.chr\${chr}.GRCh38.map"
 ```
 
 ### 6. 常用数据格式
@@ -268,42 +166,11 @@ SMC_CUTOFF=0.05           #  cutoff
 # 6. 常用数据格式说明
 # =====================================
 
-# -------- PLINK格式 --------
-# .bed   二进制基因型 (行=样本, 列=基因型)
-# .bim   位点信息 (染色体, rsID, 摩根距离, 物理位置, 等位1, 等位2)
-# .fam   样本信息 (家族ID, 个体ID, 父亲, 母亲, 性别, 表型)
-
-# -------- VCF格式 --------
-# #CHROM POS ID REF ALT QUAL FILTER INFO FORMAT Sample1 Sample2...
-# INFO字段常见标签: DP, AF, AC, AN, MQ, QD, FS, SOR, MQRankSum, ReadPosRankSum
-
-# -------- Admixture格式 --------
-# .Q     个体祖先成分矩阵 (N样本 × K祖先)
-# .P     等位基因频率矩阵 (K祖先 × M位点)
-
-# -------- Phasing格式 --------
-# .haps  单倍型文件 (位点 × 样本*2)
-# .hapsample 样本单倍型对应
-# .sample 样本信息文件
-
-# -------- ChromoPainter格式 --------
-# .phase     连锁相文件
-# .chunkcounts.out  复制片段计数
-# .chunklengths.out  复制片段长度
-
-# -------- 选择信号格式 --------
-# .ihs      iHS得分
-# .xpehh    XP-EHH得分
-# .fst      Fst值
-# .tajima   Tajima's D
-
-# -------- 其他常用格式 --------
-# .eigenvec     PCA特征向量
-# .eval         PCA特征值
-# .ped          家系连锁相
-# .phylip       系统发育树输入
-
-# [在此添加更多格式说明...]
+# PLINK: .bed, .bim, .fam
+# VCF: .vcf, .vcf.gz
+# Admixture: .Q, .P
+# IBD: .ibd, .merged.ibd
+# EIGENSOFT: .geno, .snp, .ind
 ```
 
 ### 7. 扩展配置 (自定义变量)
@@ -313,15 +180,126 @@ SMC_CUTOFF=0.05           #  cutoff
 # 7. 扩展配置区
 # =====================================
 
-# 在此添加项目中特有的配置变量
-# 例如:
-# SPECIES="Homo sapiens"
-# BUILD="hg38"
-# POPULATION="YourPopulation"
-# ANALYSIS_DATE=$(date +%Y%m%d)
-
-# [在此添加更多自定义配置...]
+SPECIES="Homo sapiens"
+BUILD="hg38"
 ```
+
+---
+
+## 值得记忆的配置方面（类型分类）
+
+> **重要**: 以下不是具体配置值，而是**值得记忆的配置方面/类型**。这些方面帮助你理解和组织工作流，让助手能更好地为你生成脚本和配置。
+
+---
+
+### 1. 环境与基础设施方面
+
+| 配置方面 | 说明 | 记忆要点 |
+|----------|------|----------|
+| **集群系统类型** | Slurm/PBS/LSF | 选择正确的调度器语法 |
+| **严格模式** | `set -euo pipefail` | 始终启用，防止隐藏错误 |
+| **默认计算资源** | 内存、线程、分区 | 根据任务类型区分 |
+| **节点排除规则** | 某些集群需排除特定节点 | 记录以避免失败 |
+
+### 2. 目录组织方面
+
+| 配置方面 | 说明 | 记忆要点 |
+|----------|------|----------|
+| **项目根目录模式** | 统一的项目命名空间 | 便于批量处理 |
+| **子目录结构** | data/processed/results/logs等 | 保持一致的层级 |
+| **共享存储路径** | 跨项目共享的大容量存储 | 避免重复存储 |
+| **数据面板目录** | 参考面板/公共数据集中存放 | 独立于项目 |
+
+### 3. 软件管理方面
+
+| 配置方面 | 说明 | 记忆要点 |
+|----------|------|----------|
+| **软件加载方式** | module/PATH/conda/编译 | 优先使用module |
+| **Java环境** | 特定JDK版本路径 | Imputation必需 |
+| **JAR程序路径** | IBD/Imputation等Java工具 | 固定存放位置 |
+| **特殊软件编译参数** | 需要编译的软件 | 记录依赖 |
+
+### 4. 数据路径模式
+
+| 配置方面 | 说明 | 记忆要点 |
+|----------|------|----------|
+| **原始数据存放** | VCF/BAM等原始文件 | 只读备份 |
+| **中间结果存放** | PLINK/格式转换结果 | 可重新生成 |
+| **样本列表组织** | 按群体/用途分类存放 | .list文件格式 |
+| **遗传图谱位置** | 染色体特异性map文件 | 区分版本 |
+
+### 5. 分析参数类型
+
+| 配置方面 | 说明 | 记忆要点 |
+|----------|------|----------|
+| **质量控制参数** | MAF/MIND/GENO阈值 | 影响数据量 |
+| **LD修剪参数** | window/shift/R² | 影响分析精度 |
+| **群体结构参数** | Admixture K值范围 | 根据群体数调整 |
+| **选择信号参数** | 窗口大小/显著性阈值 | 影响检测灵敏度 |
+| **IBD分析参数** | 长度cutoff/LOD阈值 | 影响片段数量 |
+
+### 6. 数据格式知识
+
+| 配置方面 | 说明 | 记忆要点 |
+|----------|------|----------|
+| **输入格式要求** | 软件对输入格式的特定要求 | 某些需要索引 |
+| **中间格式转换** | VCF↔PLINK↔EIGENSTRAT | 保持信息完整 |
+| **输出格式解读** | 各种输出文件的列含义 | 便于结果解读 |
+| **索引文件** | .tbi/.bai/.csi | 随机访问必需 |
+
+### 7. 脚本编写模式
+
+| 配置方面 | 说明 | 记忆要点 |
+|----------|------|----------|
+| **SLURM头部模板** | 标准的资源请求格式 | job名称/输出路径 |
+| **染色体循环模式** | for循环处理22条染色体 | IBD/Fst常用 |
+| **数组任务模式** | --array用于参数扫描 | Admixture常用 |
+| **多步骤流程** | Step1→Step2→... | Imputation常用 |
+| **日志记录格式** | `[$(date)] 步骤描述` | 便于调试 |
+
+### 8. 错误处理模式
+
+| 配置方面 | 说明 | 记忆要点 |
+|----------|------|----------|
+| **文件预检查** | 关键文件存在性验证 | 避免中途失败 |
+| **命令返回值检查** | `if [ $? -ne 0 ]` | 及时发现错误 |
+| **中间文件检查** | 每步完成后验证输出 | 早发现早修复 |
+| **错误日志分离** | stdout/stderr分别记录 | 便于排查 |
+
+### 9. 项目组织模式
+
+| 配置方面 | 说明 | 记忆要点 |
+|----------|------|----------|
+| **项目命名规范** | 编号+描述性名称 | 便于识别 |
+| **脚本命名规范** | 功能前缀+日期 | 版本追踪 |
+| **结果版本管理** | v1.0/v2.0目录 | 可复现性 |
+| **配置集中管理** | 变量统一定义 | 易于修改 |
+
+### 10. 工作流程模式
+
+| 配置方面 | 说明 | 记忆要点 |
+|----------|------|----------|
+| **典型分析顺序** | QC→Pruning→Admixture→... | 逻辑依赖 |
+| **并行化策略** | 染色体级/样本级并行 | 加速计算 |
+| **依赖步骤处理** | 下游依赖上游输出 | 避免重算 |
+| **检查点设置** | 大任务分阶段验证 | 早发现错误 |
+
+---
+
+### 如何使用这些记忆
+
+1. **编写脚本时**: 助手会自动使用你配置的具体值，并遵循上述模式
+2. **遇到新软件时**: 参考"数据格式知识"确保输入输出正确
+3. **调试问题时**: 参考"错误处理模式"添加检查
+4. **设计新流程时**: 参考"工作流程模式"规划步骤
+
+### 配置更新方式
+
+当你有新的工作流模式需要记忆时：
+
+1. **更新具体配置**: 直接编辑上方各配置节
+2. **添加新模式**: 在example目录的user_workflow_memory.md中添加
+3. **告诉助手**: 描述你常用的模式，助手会记住
 
 ---
 
@@ -861,6 +839,231 @@ tabix -h ftp://ftp.1000genomes.ebi.ac.uk/.../chr22.vcf.gz 22:1000000-5000000 > r
 | clusterProfiler | R包 | 离线富集分析 |
 
 ---
+---
+
+## 第九阶段A：古代DNA (aDNA) 分析
+
+### 9A.1 古DNA分析概述
+
+| 分析类型 | 软件/方法 | 说明 |
+|----------|----------|------|
+| 数据预处理 | fastp, AdapterRemoval | 原始数据质控与接头去除 |
+| 比对 | BWA, bwa-aln | 针对古DNA的短读长比对 |
+| 损伤模式 | mapDamage | 评估古DNA损伤(C→T, G→A) |
+| 基因型分型 | ANGSD, GATK | 概率学基因型calling |
+| 群体遗传分析 | ADMIXTURE, PCA, f-statistics | 同现代人分析 |
+
+### 9A.2 古DNA数据获取
+
+#### 常用古代样本数据集
+
+| 数据库 | 说明 |
+|--------|------|
+| Allen Ancient DNA Resource (AADR) | 最大的古DNA数据集，re-lab提供 |
+| 田园洞人 | Nature 2017，中国早期现代人 |
+| 福建奇岛人 | Cell 2020，福建区域古DNA |
+| 绳纹人 | Science 2021，日本绳纹时期 |
+| 山顶洞人 | 多个发表，中国古DNA |
+
+### 9A.3 古DNA损伤模式
+
+#### mapDamage 分析
+
+```bash
+# 分析单核苷酸损伤模式
+mapDamage -i ancient.bam -r reference_genome.fa -d damage_result/
+
+# 关键输出:
+# damage.pdf - 损伤可视化图
+# 5pC>T - 5'端C>T替换比例
+# 3pG>A - 3'端G>A替换比例
+
+# 结果解释:
+# - 新石器时代样本: ~10-15% 末端C>T
+# - 更新世样本: ~30%+ 末端C>T
+# - 现代样本: <3% 末端C>T
+```
+
+### 9A.4 现代人与古DNA联合分析
+
+#### 数据准备
+
+```bash
+# 需要转换为EIGENSTRAT格式
+# modern.geno/modern.snp/modern.ind
+# ancient.geno/ancient.snp/ancient.ind
+```
+
+#### 联合PCA分析
+
+```bash
+# 使用smartpca进行联合PCA
+# 参数文件:
+# lsqproject: YES    # 关键：古人样本投影
+```
+
+### 9A.5 古DNA分析注意事项
+
+| 要点 | 说明 |
+|------|------|
+| 损伤校正 | 古DNA有特征性末端损伤 |
+| 数据质量 | 覆盖度低，需使用概率学方法 |
+| 参考群体 | 选择合适的现代参考群体 |
+| 1240k vs HO | 1240k位点更多，HO适合与公开数据比较 |
+
+---
+
+## 第九阶段B：古代渗入分析 (Archaic Introgression)
+
+### 9B.1 概述
+
+| 渗入类型 | 古老群体 | 现代人中的比例 |
+|----------|----------|----------------|
+| 尼安德特人渗入 | 欧亚大陆人群 | 1-4% |
+| 丹尼索瓦人渗入 | 澳大利亚/大洋洲 | 4-6% |
+
+### 9B.2 ArchaicSeeker2 使用
+
+```bash
+# 准备 .haps/.sample 格式
+ArchaicSeeker2.py \
+    -vcf input.vcf.gz \
+    -s sample_list.txt \
+    -o output_prefix \
+    -anc ancestral_alleles.txt \
+    -t 8
+
+# 参数:
+# -minLen: 最小渗入片段长度 (建议5000-10000)
+```
+
+### 9B.3 ArchaicSeek 使用
+
+```bash
+ArchaicSeek \
+    --vcf input.vcf.gz \
+    --output output \
+    --ref_vcf Neanderthal.vcf.gz \
+    --denisovan_vcf Denisovan.vcf.gz \
+    --window 100 --step 50
+```
+
+### 9B.4 渗入时间估计
+
+#### MSMC 方法
+
+```bash
+for chr in {1..22}; do
+    msmc2 -t 8 -o chr${chr} chr${chr}.haps chr${chr}.sample
+done
+```
+
+### 9B.5 丹尼索瓦人渗入地理分布
+
+| 人群 | 丹尼索瓦人比例 |
+|------|----------------|
+| 澳大利亚原住民 | 4-6% |
+| 巴布亚新几内亚 | 4-5% |
+| 菲律宾 | 3-4% |
+| 中国藏族 | 0.3-0.5% |
+| 东南亚大陆 | 0.1-0.3% |
+
+---
+
+## 第九阶段C：群体混合历史建模
+
+### 9C.1 qpAdm 分析
+
+#### 基本用法
+
+```bash
+# parfile示例:
+qpAdm -p parfile.txt > qpAdm.out
+
+# left: sources.txt   # 源群体
+# right: outgroups.txt # 外群
+# target: target.txt  # 目标群体
+# details: YES
+```
+
+#### 群体列表格式
+
+```
+# sources.txt:
+Sample1_Hehezhou Hehezhou
+Sample2_Hehezhou Hehezhou
+Sample3_Tianyuan Tianyuan
+```
+
+#### 结果解读
+
+```
+# Best model: p-value > 0.05 表示模型可接受
+# mixing proportions: 各源群体的比例
+```
+
+### 9C.2 Multiwave2 分析
+
+```bash
+# 检测多次群体波浪潮
+Multiwave2 \
+    --target target_population \
+    --ref ref1,ref2,ref3 \
+    --out output \
+    --n_waves 3
+```
+
+### 9C.3 TreeMix 分析
+
+```bash
+# 基因流检测
+treemix -i input.ckpmix.gz -o treemix_k${k} -k 500 -m ${k}
+```
+
+### 9C.4 f3/f4-statistics
+
+```bash
+# f3-statistics (混合检测)
+qp3Pop -p parfile.txt
+
+# f4-statistics (分化检测)
+qp4Pop -p parfile.txt
+
+# Z-score解释:
+# |Z| > 3: 显著
+```
+
+### 9C.5 混合历史建模流程
+
+1. 数据准备 (EIGENSTRAT格式)
+2. PCA + Admixture 初步分析
+3. f-statistics 检验
+4. qpAdm 建模
+5. MSMC/Multiwave2 时间估计
+6. 验证 (交叉验证 + 考古证据)
+
+### 9C.6 中国人群混合历史
+
+| 人群 | 最佳模型 |
+|------|----------|
+| 北方汉族 | 南方汉族 + 古代北方 |
+| 藏族 | 汉族 + 古代西藏 |
+| 维吾尔族 | 欧洲 + 东亚 + 中亚 |
+
+---
+
+## 第十阶段B：古DNA与古代渗入结果展示
+
+### 可视化类型
+
+| 分析 | 可视化 |
+|------|--------|
+| PCA | 散点图+投影 |
+| Admixture | 堆叠条形图 |
+| 渗入片段 | 染色体分布图 |
+| 时间估计 | 折线图 |
+| f-statistics | 热图 |
+
 
 ## 第十阶段：结果展示与论文图表
 
@@ -1148,3 +1351,111 @@ project/
 - 教授原理而不只是使用方法
 - 帮助理解结果背后的生物学意义
 - 必要时检索最新文献和资源
+
+---
+
+## 附录C：软件学习方法论与自动检索（增强）
+
+### C.1 强化软件学习流程
+
+**重要**: 当用户询问任何软件时，必须遵循以下增强流程：
+
+#### 自动检索触发条件
+
+当用户提及以下关键词时，必须立即启动检索：
+- 任何软件名称（ADMIXTURE, qpAdm, ArchaicSeeker, MSMC等）
+- 任何分析方法（"怎么做PCA"、"如何做f-statistics"）
+- 任何分析目的（"想检测选择信号"、"想分析古代渗入"）
+
+#### 检索执行规范
+
+```
+必须执行的检索操作：
+1. 使用 web_search 搜索 "[软件名] official documentation"
+2. 使用 web_search 搜索 "[软件名] GitHub"
+3. 使用 web_search 搜索 "[软件名] paper Nature Science"
+4. 使用 librarian 检索中文教程/博客（如果用户用中文提问）
+
+禁止：
+- ❌ 只凭记忆回答
+- ❌ 不检索直接给出可能过时的信息
+- ❌ 跳过官方文档
+```
+
+---
+
+
+---
+
+## 附录D：脚本模板库（参考文件）
+
+**重要**: 完整脚本模板已移至 `references/scripts/` 目录。
+
+### 脚本模板索引
+
+| 脚本 | 用途 |
+|------|------|
+| qpadm_pipeline.sh | 群体混合建模 (qpAdm) |
+| archaic_seeker.sh | 古代渗入分析 (ArchaicSeeker2) |
+| aadr_download.sh | Allen Lab古DNA数据获取 |
+| admixture_batch.sh | Admixture批量运行 |
+| ibd_analysis.sh | IBD血缘片段分析 |
+
+### 使用方法
+
+1. 查找模板: `references/scripts/`
+2. 复制到项目目录
+3. 修改配置区参数
+4. 运行
+
+## 附录E：古DNA与渗入分析错误模式库
+
+### E.1 常见错误及解决方案
+
+| 错误类型 | 错误信息 | 解决方案 |
+|----------|----------|----------|
+| 数据格式错误 | "EIGENSTRAT: Number of loci mismatch" | 重新转换确保位点一致 |
+| 样本缺失 | "individual not found in .ind file" | 检查样本ID拼写 |
+| 等位基因错误 | "allele count mismatch" | 使用正确参考等位基因 |
+| 渗入分析错误 | "no valid windows found" | 增加MIN_LENGTH参数 |
+| qpAdm模型失败 | "all models rejected (p<0.05)" | 更换源群体组合 |
+
+### E.2 古DNA特有错误
+
+| 错误 | 解决 |
+|------|------|
+| 损伤率过高 | 检查authentity |
+| 覆盖度太低 | 降低分析要求或排除 |
+| 异源污染 | 使用污染评估工具 |
+
+### E.3 渗入分析特有错误
+
+| 错误 | 解决 |
+|------|------|
+| 无渗入信号 | 使用更古老的参考 |
+| 假阳性 | 增加MIN_LENGTH |
+
+---
+
+
+---
+
+## 附录F：Python可视化模板（参考文件）
+
+**重要**: 完整可视化脚本已移至 `references/python/` 目录。
+
+### 可视化脚本索引
+
+| 脚本 | 用途 |
+|------|------|
+| pca_visualization.py | PCA散点图（支持古人投影） |
+| admixture_visualization.py | Admixture堆叠条形图 |
+| introgression_visualization.py | 渗入片段染色体分布 |
+| f_statistics_visualization.py | f3/f4热图 |
+
+### 使用方法
+
+1. 查找脚本: `references/python/`
+2. 准备数据文件
+3. 运行: `python script_name.py`
+
